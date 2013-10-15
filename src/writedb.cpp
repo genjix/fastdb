@@ -21,6 +21,8 @@ private:
     uint64_t version_, buckets_, total_records_size_;
 };
 
+#include <sys/mman.h>
+
 transaction_database::transaction_database(mmfile& file)
   : file_(file)
 {
@@ -38,7 +40,12 @@ transaction_database::transaction_database(mmfile& file)
     BITCOIN_ASSERT(version_ == 1);
     log_debug() << "buckets: " << buckets_
         << ", values_size: " << total_records_size_;
-    BITCOIN_ASSERT(file_.size() >= 24 + buckets_ * 8 + total_records_size_);
+    const size_t header_size = 24 + buckets_ * 8;
+    BITCOIN_ASSERT(file_.size() >= header_size + total_records_size_);
+    // Advise the kernel that our access patterns for the tx records
+    // will be random without pattern.
+    madvise(file_.data() + header_size, file_.size() - header_size,
+        POSIX_MADV_RANDOM);
 }
 
 size_t align_if_crossing_page(
@@ -95,11 +102,16 @@ void transaction_database::store(const transaction_type& tx)
     link_record(bucket_index, record_begin);
 }
 
+inline size_t bucket_offset(uint64_t bucket_index)
+{
+    return 24 + bucket_index * 8;
+}
+
 uint64_t transaction_database::read_bucket_value(uint64_t bucket_index)
 {
     BITCOIN_ASSERT(file_.size() > 24 + buckets_ * 8);
     BITCOIN_ASSERT(bucket_index < buckets_);
-    uint8_t* bucket_begin = file_.data() + 24 + bucket_index * 8;
+    uint8_t* bucket_begin = file_.data() + bucket_offset(bucket_index);
     // Read current record stored in the bucket.
     auto deserial = make_deserializer(bucket_begin, bucket_begin + 8);
     return deserial.read_8_bytes();
@@ -115,7 +127,7 @@ void transaction_database::link_record(
 {
     BITCOIN_ASSERT(file_.size() > 24 + buckets_ * 8);
     BITCOIN_ASSERT(bucket_index < buckets_);
-    uint8_t* bucket_begin = file_.data() + 24 + bucket_index * 8;
+    uint8_t* bucket_begin = file_.data() + bucket_offset(bucket_index);
     auto serial = make_serializer(bucket_begin);
     serial.write_8_bytes(record_begin);
 }
