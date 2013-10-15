@@ -1,7 +1,7 @@
 CXXFLAGS=$(shell pkg-config --cflags libbitcoin) -ggdb
 LIBS=$(shell pkg-config --libs libbitcoin) -lgmp
 
-default: initdb dispdb writedb showbucket bucketidx readdb
+default: initdb dispdb writedb showbucket bucketidx readdb importdb
 
 mmfile.o: mmfile.cpp mmfile.hpp
 	g++ -c -o mmfile.o $(CXXFLAGS) mmfile.cpp
@@ -27,6 +27,11 @@ dispdb.o: dispdb.cpp mmfile.hpp
 	g++ -c -o dispdb.o dispdb.cpp $(CXXFLAGS)
 dispdb: dispdb.o mmfile.o
 	g++ -o dispdb dispdb.o mmfile.o $(LIBS)
+
+importdb.o: importdb.cpp mmfile.hpp
+	g++ -c -o importdb.o importdb.cpp $(CXXFLAGS)
+importdb: importdb.o mmfile.o transaction_database.o
+	g++ -o importdb importdb.o mmfile.o transaction_database.o $(LIBS)
 
 writedb.o: writedb.cpp mmfile.hpp
 	g++ -c -o writedb.o writedb.cpp $(CXXFLAGS)

@@ -1,10 +1,14 @@
+#include <boost/lexical_cast.hpp>
 #include <bitcoin/bitcoin.hpp>
 #include "mmfile.hpp"
 
 using namespace bc;
 
-int main()
+int main(int argc, char** argv)
 {
+    uint64_t buckets = 2000000;
+    if (argc == 2)
+        buckets = boost::lexical_cast<uint64_t>(argv[1]);
     // create and alloc file
     mmfile mf("../tx.db");
     BITCOIN_ASSERT(mf.data() != nullptr);
@@ -13,7 +17,6 @@ int main()
     // [ values size ]  8
     //     ...
     //     ...
-    uint64_t buckets = 725000000;
     BITCOIN_ASSERT(mf.size() > 24);
     auto serial = make_serializer(mf.data());
     serial.write_8_bytes(1);

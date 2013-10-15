@@ -5,6 +5,8 @@
 #include <bitcoin/transaction.hpp>
 #include <bitcoin/utility/assert.hpp>
 
+#define LOG_TXDB    "transaction_database"
+
 namespace libbitcoin {
 
 constexpr uint64_t record_doesnt_exist = std::numeric_limits<uint64_t>::max();
@@ -29,7 +31,7 @@ transaction_database_writer::transaction_database_writer(mmfile& file)
     buckets_ = deserial.read_8_bytes();
     total_records_size_ = deserial.read_8_bytes();
     BITCOIN_ASSERT(version_ == 1);
-    log_debug() << "buckets: " << buckets_
+    log_debug(LOG_TXDB) << "buckets: " << buckets_
         << ", values_size: " << total_records_size_;
     const size_t header_size = 24 + buckets_ * 8;
     BITCOIN_ASSERT(file_.size() >= header_size + total_records_size_);
@@ -46,7 +48,7 @@ size_t align_if_crossing_page(
     size_t record_end = record_begin + record_size;
     size_t starting_page = record_begin / page_size;
     size_t ending_page = record_end / page_size;
-    if (starting_page != ending_page)
+    if (record_size <= page_size && starting_page != ending_page)
         record_begin = ending_page * page_size;
     return record_begin;
 }
@@ -55,17 +57,17 @@ void transaction_database_writer::store(const transaction_type& tx)
 {
     // Calculate the end of the last record.
     const uint64_t header_size = 24 + buckets_ * 8;
-    uint64_t records_end_offset = header_size + total_records_size_;
+    const uint64_t records_end_offset = header_size + total_records_size_;
     // [ tx hash ]              32
     // [ varuint record size ]
     // [ ... data ... ]
     // [ next tx in bucket ]    8
-    size_t raw_tx_size = satoshi_raw_size(tx);
-    size_t record_size =
+    const size_t raw_tx_size = satoshi_raw_size(tx);
+    const size_t record_size =
         32 + variable_uint_size(raw_tx_size) + raw_tx_size + 8;
     // If a record crosses a page boundary then we align it with
     // the beginning of the next page.
-    size_t record_begin =
+    const size_t record_begin =
         align_if_crossing_page(page_size_, records_end_offset, record_size);
     BITCOIN_ASSERT(file_.size() >= record_begin + record_size);
     const hash_digest tx_hash = hash_transaction(tx);
@@ -73,9 +75,9 @@ void transaction_database_writer::store(const transaction_type& tx)
     // I assume that more recent transactions in the blockchain are used
     // more often than older ones.
     // We lookup the existing value in the bucket first.
-    uint64_t bucket_index = remainder(tx_hash.data(), buckets_);
+    const uint64_t bucket_index = remainder(tx_hash.data(), buckets_);
     BITCOIN_ASSERT(bucket_index < buckets_);
-    uint64_t previous_bucket_value = read_bucket_value(bucket_index);
+    const uint64_t previous_bucket_value = read_bucket_value(bucket_index);
     // Now begin writing the record itself.
     uint8_t* entry = file_.data() + record_begin;
     auto serial = make_serializer(entry);
@@ -89,10 +91,13 @@ void transaction_database_writer::store(const transaction_type& tx)
     // This must be done first so any subsequent writes don't
     // overwrite this record in case of a crash or interruption.
     BITCOIN_ASSERT(record_begin >= header_size);
-    uint64_t record_begin_offset = record_begin - header_size;
-    total_records_size_ += record_begin_offset + record_size;
+    const uint64_t alignment_padding =
+        record_begin - header_size - total_records_size_;
+    BITCOIN_ASSERT(alignment_padding <= page_size_);
+    total_records_size_ += record_size + alignment_padding;
     write_records_size();
     // Now add record to bucket.
+    const uint64_t record_begin_offset = record_begin - header_size;
     link_record(bucket_index, record_begin_offset);
 }
 
@@ -107,7 +112,8 @@ uint64_t transaction_database_writer::read_bucket_value(uint64_t bucket_index)
 }
 void transaction_database_writer::write_records_size()
 {
-    BITCOIN_ASSERT(file_.size() > 24);
+    const size_t header_size = 24 + buckets_ * 8;
+    BITCOIN_ASSERT(file_.size() >= header_size + total_records_size_);
     auto serial = make_serializer(file_.data() + 16);
     serial.write_8_bytes(total_records_size_);
 }

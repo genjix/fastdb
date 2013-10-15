@@ -19,6 +19,9 @@ int main()
     BITCOIN_ASSERT(version == 1);
     log_debug() << "buckets: " << buckets
         << ", records_size: " << records_size;
+    log_debug() << "filesize: " << mf.size();
+    const size_t header_size = 24 + buckets * 8;
+    log_debug() << "header_size: " << header_size;
     BITCOIN_ASSERT(mf.size() >= 24 + buckets * 8 + records_size);
     // Start reading records.
     uint8_t* records_begin = mf.data() + 24 + buckets * 8;
