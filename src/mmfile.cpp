@@ -33,6 +33,10 @@ uint8_t* mmfile::data()
 {
     return data_;
 }
+const uint8_t* mmfile::data() const
+{
+    return data_;
+}
 const size_t mmfile::size() const
 {
     return size_;
