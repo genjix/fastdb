@@ -27,8 +27,9 @@ int main()
     uint8_t* records_begin = mf.data() + 24 + buckets * 8;
     uint8_t* current_record = records_begin + record_offset;
     deserial.set_iterator(current_record);
-    while (current_record - records_begin < records_size)
+    while (true)
     {
+        BITCOIN_ASSERT(current_record - records_begin < records_size);
         const hash_digest tx_hash = deserial.read_hash();
         uint64_t raw_tx_size = deserial.read_variable_uint();
         transaction_type tx;
@@ -38,8 +39,12 @@ int main()
         BITCOIN_ASSERT(hash_transaction(tx) == tx_hash);
         uint64_t bucket_index = remainder(tx_hash.data(), buckets);
         log_debug() << tx_hash << " [" << bucket_index << "] -> " << next;
-        //current_record = deserial.iterator();
-        break;
+        constexpr uint64_t record_doesnt_exist =
+            std::numeric_limits<uint64_t>::max();
+        if (next == record_doesnt_exist)
+            break;
+        current_record = records_begin + next;
+        deserial.set_iterator(current_record);
     }
     return 0;
 }

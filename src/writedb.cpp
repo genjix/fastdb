@@ -63,7 +63,8 @@ size_t align_if_crossing_page(
 void transaction_database::store(const transaction_type& tx)
 {
     // Calculate the end of the last record.
-    uint64_t records_end_offset = 24 + buckets_ * 8 + total_records_size_;
+    const uint64_t header_size = 24 + buckets_ * 8;
+    uint64_t records_end_offset = header_size + total_records_size_;
     // [ tx hash ]              32
     // [ varuint record size ]
     // [ ... data ... ]
@@ -96,10 +97,12 @@ void transaction_database::store(const transaction_type& tx)
     // Change file size value at file start.
     // This must be done first so any subsequent writes don't
     // overwrite this record in case of a crash or interruption.
-    total_records_size_ += record_begin + record_size - records_end_offset;
+    BITCOIN_ASSERT(record_begin >= header_size);
+    uint64_t record_begin_offset = record_begin - header_size;
+    total_records_size_ += record_begin_offset + record_size;
     write_records_size();
     // Now add record to bucket.
-    link_record(bucket_index, record_begin);
+    link_record(bucket_index, record_begin_offset);
 }
 
 inline size_t bucket_offset(uint64_t bucket_index)

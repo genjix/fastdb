@@ -19,10 +19,10 @@ int main()
     serial.write_8_bytes(1);
     serial.write_8_bytes(buckets);
     serial.write_8_bytes(0);
-    constexpr uint64_t unused_bucket_marker =
+    constexpr uint64_t record_doesnt_exist =
         std::numeric_limits<uint64_t>::max();
     for (uint64_t i = 0; i < buckets; ++i)
-        serial.write_8_bytes(unused_bucket_marker);
+        serial.write_8_bytes(record_doesnt_exist );
     return 0;
 }
 
