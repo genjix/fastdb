@@ -10,9 +10,7 @@ int main(int argc, char** argv)
     if (argc == 2)
         tx_hash_str = argv[1];
     // create and alloc file
-    mmfile mf("../tx.db");
-    transaction_database_writer txdb_write(mf);
-    transaction_database_reader txdb(mf, txdb_write);
+    transaction_database txdb("../tx.db");
     hash_digest tx_hash = decode_hex_digest<hash_digest>(tx_hash_str);
     transaction_type tx;
     bool success = txdb.get(tx_hash, tx);

@@ -1,10 +1,12 @@
 CXXFLAGS=$(shell pkg-config --cflags libbitcoin) -ggdb
 LIBS=$(shell pkg-config --libs libbitcoin) -lgmp
 
-default: initdb dispdb writedb showbucket bucketidx readdb importdb
+default: initdb dispdb writedb showbucket bucketidx readdb importdb listbuckets
 
 mmfile.o: mmfile.cpp mmfile.hpp
 	g++ -c -o mmfile.o $(CXXFLAGS) mmfile.cpp
+hashtable_database.o: hashtable_database.cpp hashtable_database.hpp
+	g++ -c -o hashtable_database.o $(CXXFLAGS) hashtable_database.cpp
 transaction_database.o: transaction_database.cpp transaction_database.hpp
 	g++ -c -o transaction_database.o $(CXXFLAGS) transaction_database.cpp
 
@@ -23,6 +25,11 @@ bucketidx.o: bucketidx.cpp mmfile.hpp
 bucketidx: bucketidx.o mmfile.o
 	g++ -o bucketidx bucketidx.o mmfile.o $(LIBS)
 
+listbuckets.o: listbuckets.cpp mmfile.hpp
+	g++ -c -o listbuckets.o listbuckets.cpp $(CXXFLAGS)
+listbuckets: listbuckets.o mmfile.o
+	g++ -o listbuckets listbuckets.o mmfile.o $(LIBS)
+
 dispdb.o: dispdb.cpp mmfile.hpp
 	g++ -c -o dispdb.o dispdb.cpp $(CXXFLAGS)
 dispdb: dispdb.o mmfile.o
@@ -30,16 +37,16 @@ dispdb: dispdb.o mmfile.o
 
 importdb.o: importdb.cpp mmfile.hpp
 	g++ -c -o importdb.o importdb.cpp $(CXXFLAGS)
-importdb: importdb.o mmfile.o transaction_database.o
-	g++ -o importdb importdb.o mmfile.o transaction_database.o $(LIBS)
+importdb: importdb.o mmfile.o transaction_database.o hashtable_database.o
+	g++ -o importdb importdb.o mmfile.o transaction_database.o hashtable_database.o $(LIBS)
 
 writedb.o: writedb.cpp mmfile.hpp
 	g++ -c -o writedb.o writedb.cpp $(CXXFLAGS)
-writedb: writedb.o mmfile.o transaction_database.o
-	g++ -o writedb writedb.o mmfile.o transaction_database.o $(LIBS)
+writedb: writedb.o mmfile.o transaction_database.o hashtable_database.o
+	g++ -o writedb writedb.o mmfile.o transaction_database.o hashtable_database.o $(LIBS)
 
 readdb.o: readdb.cpp mmfile.hpp
 	g++ -c -o readdb.o readdb.cpp $(CXXFLAGS)
-readdb: readdb.o mmfile.o transaction_database.o
-	g++ -o readdb readdb.o mmfile.o transaction_database.o $(LIBS)
+readdb: readdb.o mmfile.o transaction_database.o hashtable_database.o
+	g++ -o readdb readdb.o mmfile.o transaction_database.o hashtable_database.o $(LIBS)
 

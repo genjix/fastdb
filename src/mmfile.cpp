@@ -8,9 +8,10 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 
-mmfile::mmfile(const char* path)
+mmfile::mmfile(const std::string& filename)
 {
-    file_handle_ = open64(path, O_RDWR, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+    file_handle_ = open64(filename.c_str(),
+        O_RDWR, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
     if (file_handle_ == -1)
         return;
     struct stat64 sbuf;

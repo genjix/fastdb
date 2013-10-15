@@ -3,11 +3,12 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <string>
 
 class mmfile
 {
 public:
-    mmfile(const char* path);
+    mmfile(const std::string& filename);
     ~mmfile();
     uint8_t* data();
     const uint8_t* data() const;
