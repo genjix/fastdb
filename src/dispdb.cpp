@@ -6,7 +6,7 @@ using namespace bc;
 
 int main()
 {
-    log_debug() << "REMEMBER THAT TRANSACTIONS DO NOT CROSS PAGE FAULTS";
+    log_debug() << "REMEMBER THAT TRANSACTIONS TRY NOT TO CROSS PAGE FAULTS";
     log_debug() << "PARSING RECORDS MIGHT CRASH CLOSE TO THE NEXT PAGE";
     // create and alloc file
     mmfile mf("../tx.db");
