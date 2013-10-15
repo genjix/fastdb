@@ -4,7 +4,9 @@ LIBS=$(shell pkg-config --libs libbitcoin) -lgmp
 default: initdb dispdb writedb showbucket
 
 mmfile.o: mmfile.cpp mmfile.hpp
-	g++ -c -o mmfile.o $(CXXFLAGS)
+	g++ -c -o mmfile.o $(CXXFLAGS) mmfile.cpp
+transaction_database.o: transaction_database.cpp transaction_database.hpp
+	g++ -c -o transaction_database.o $(CXXFLAGS) transaction_database.cpp
 
 initdb.o: initdb.cpp mmfile.hpp
 	g++ -c -o initdb.o initdb.cpp $(CXXFLAGS)
@@ -23,6 +25,6 @@ dispdb: dispdb.o mmfile.o
 
 writedb.o: writedb.cpp mmfile.hpp
 	g++ -c -o writedb.o writedb.cpp $(CXXFLAGS)
-writedb: writedb.o mmfile.o
-	g++ -o writedb writedb.o mmfile.o $(LIBS)
+writedb: writedb.o mmfile.o transaction_database.o
+	g++ -o writedb writedb.o mmfile.o transaction_database.o $(LIBS)
 

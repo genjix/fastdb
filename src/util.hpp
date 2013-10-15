@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <gmp.h>
 
+namespace libbitcoin {
+
 inline uint64_t remainder(const uint8_t* hash_data, const uint64_t divisor)
 {
     mpz_t integ;
@@ -13,6 +15,8 @@ inline uint64_t remainder(const uint8_t* hash_data, const uint64_t divisor)
     mpz_clear(integ);
     return remainder;
 }
+
+} // namespace libbitcoin
 
 #endif
 
