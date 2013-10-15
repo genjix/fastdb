@@ -1,7 +1,18 @@
 #include <bitcoin/bitcoin.hpp>
+#include <gmp.h>
 #include "mmfile.hpp"
 
 using namespace bc;
+
+uint64_t remainder(const uint8_t* hash_data, const uint64_t divisor)
+{
+    mpz_t integ;
+    mpz_init(integ);
+    mpz_import(integ, 32, 1, 1, 1, 0, hash_data);
+    uint64_t remainder = mpz_fdiv_ui(integ, divisor);
+    mpz_clear(integ);
+    return remainder;
+}
 
 int main()
 {
@@ -30,7 +41,8 @@ int main()
         deserial.set_iterator(deserial.iterator() + raw_tx_size);
         uint64_t next = deserial.read_8_bytes();
         BITCOIN_ASSERT(hash_transaction(tx) == tx_hash);
-        log_debug() << tx_hash;
+        uint64_t bucket_index = remainder(tx_hash.data(), buckets);
+        log_debug() << tx_hash << " [" << bucket_index << "] -> " << next;
         current_record = deserial.iterator();
     }
     BITCOIN_ASSERT(current_record - records_begin == records_size);

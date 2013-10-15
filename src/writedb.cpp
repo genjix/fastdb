@@ -1,7 +1,7 @@
 #include <bitcoin/bitcoin.hpp>
-#include "mmfile.hpp"
-#include <gmp.h>
 #include <leveldb/db.h>
+#include "mmfile.hpp"
+#include "util.hpp"
 
 using namespace bc;
 
@@ -9,10 +9,12 @@ class transaction_database
 {
 public:
     transaction_database(mmfile& file);
-    void write(const transaction_type& tx);
+    void store(const transaction_type& tx);
 
 private:
+    uint64_t read_bucket_value(uint64_t bucket_index);
     void write_records_size();
+    void link_record(uint64_t bucket_index, uint64_t record_begin);
 
     mmfile& file_;
     size_t page_size_ = sysconf(_SC_PAGESIZE);
@@ -51,8 +53,9 @@ size_t align_if_crossing_page(
     return record_begin;
 }
 
-void transaction_database::write(const transaction_type& tx)
+void transaction_database::store(const transaction_type& tx)
 {
+    // Calculate the end of the last record.
     uint64_t records_end_offset = 24 + buckets_ * 8 + total_records_size_;
     // [ tx hash ]              32
     // [ varuint record size ]
@@ -66,30 +69,55 @@ void transaction_database::write(const transaction_type& tx)
     size_t record_begin =
         align_if_crossing_page(page_size_, records_end_offset, record_size);
     BITCOIN_ASSERT(file_.size() >= record_begin + record_size);
+    const hash_digest tx_hash = hash_transaction(tx);
+    // We will insert new transactions at the beginning of the bucket's list.
+    // I assume that more recent transactions in the blockchain are used
+    // more often than older ones.
+    // We lookup the existing value in the bucket first.
+    uint64_t bucket_index = remainder(tx_hash.data(), buckets_);
+    BITCOIN_ASSERT(bucket_index < buckets_);
+    uint64_t previous_bucket_value = read_bucket_value(bucket_index);
     // Now begin writing the record itself.
     uint8_t* entry = file_.data() + record_begin;
     auto serial = make_serializer(entry);
-    const hash_digest tx_hash = hash_transaction(tx);
     serial.write_hash(tx_hash);
     serial.write_variable_uint(raw_tx_size);
     auto it = satoshi_save(tx, serial.iterator());
     serial.set_iterator(it);
-    serial.write_8_bytes(0);
+    serial.write_8_bytes(previous_bucket_value);
     BITCOIN_ASSERT(serial.iterator() == entry + record_size);
     // Change file size value at file start.
     // This must be done first so any subsequent writes don't
     // overwrite this record in case of a crash or interruption.
     total_records_size_ += record_begin + record_size - records_end_offset;
     write_records_size();
-    // 
-    // change next value of any colliding tx in the bucket.
+    // Now add record to bucket.
+    link_record(bucket_index, record_begin);
 }
 
+uint64_t transaction_database::read_bucket_value(uint64_t bucket_index)
+{
+    BITCOIN_ASSERT(file_.size() > 24 + buckets_ * 8);
+    BITCOIN_ASSERT(bucket_index < buckets_);
+    uint8_t* bucket_begin = file_.data() + 24 + bucket_index * 8;
+    // Read current record stored in the bucket.
+    auto deserial = make_deserializer(bucket_begin, bucket_begin + 8);
+    return deserial.read_8_bytes();
+}
 void transaction_database::write_records_size()
 {
     BITCOIN_ASSERT(file_.size() > 24);
     auto serial = make_serializer(file_.data() + 16);
     serial.write_8_bytes(total_records_size_);
+}
+void transaction_database::link_record(
+    uint64_t bucket_index, uint64_t record_begin)
+{
+    BITCOIN_ASSERT(file_.size() > 24 + buckets_ * 8);
+    BITCOIN_ASSERT(bucket_index < buckets_);
+    uint8_t* bucket_begin = file_.data() + 24 + bucket_index * 8;
+    auto serial = make_serializer(bucket_begin);
+    serial.write_8_bytes(record_begin);
 }
 
 int main()
@@ -98,7 +126,7 @@ int main()
     mmfile mf("../tx.db");
     transaction_database txdb(mf);
     transaction_type tx = genesis_block().transactions[0];
-    txdb.write(tx);
+    txdb.store(tx);
     return 0;
 }
 
