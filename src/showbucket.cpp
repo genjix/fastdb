@@ -1,12 +1,15 @@
+#include <boost/lexical_cast.hpp>
 #include <bitcoin/bitcoin.hpp>
 #include "mmfile.hpp"
 #include "util.hpp"
 
 using namespace bc;
 
-int main()
+int main(int argc, char** argv)
 {
     uint64_t bucket_index = 698648699;
+    if (argc == 2)
+        bucket_index = boost::lexical_cast<uint64_t>(argv[1]);
     // create and alloc file
     mmfile mf("../tx.db");
     BITCOIN_ASSERT(mf.data() != nullptr);
