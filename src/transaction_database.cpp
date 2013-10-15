@@ -1,6 +1,8 @@
 #include "transaction_database.hpp"
 
 #include <sys/mman.h>
+#include <bitcoin/satoshi_serialize.hpp>
+#include <bitcoin/utility/assert.hpp>
 
 namespace libbitcoin {
 

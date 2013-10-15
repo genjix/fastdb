@@ -1,5 +1,6 @@
-#include <leveldb/db.h>
 #include "transaction_database.hpp"
+#include <leveldb/db.h>
+#include <bitcoin/bitcoin.hpp>
 
 using namespace bc;
 

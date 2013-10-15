@@ -1,7 +1,7 @@
 #ifndef TRANSACTION_DATABASE_HPP
 #define TRANSACTION_DATABASE_HPP
 
-#include <bitcoin/bitcoin.hpp>
+#include <bitcoin/primitives.hpp>
 #include "mmfile.hpp"
 #include "util.hpp"
 
@@ -11,7 +11,7 @@ class transaction_database
 {
 public:
     transaction_database(mmfile& file);
-    void store(const bc::transaction_type& tx);
+    void store(const transaction_type& tx);
 
 private:
     uint64_t read_bucket_value(uint64_t bucket_index);
