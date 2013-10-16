@@ -1,7 +1,8 @@
 CXXFLAGS=$(shell pkg-config --cflags libbitcoin) -ggdb
 LIBS=$(shell pkg-config --libs libbitcoin) -lgmp
 
-default: initdb dispdb writedb showbucket bucketidx readdb importdb listbuckets benchmark
+default: initdb dispdb writedb showbucket bucketidx readdb importdb \
+    listbuckets benchmark compare-prepare compare-lvl-store compare-fastdb-store
 
 mmfile.o: mmfile.cpp mmfile.hpp
 	g++ -c -o mmfile.o $(CXXFLAGS) mmfile.cpp
@@ -29,6 +30,21 @@ listbuckets.o: listbuckets.cpp mmfile.hpp
 	g++ -c -o listbuckets.o listbuckets.cpp $(CXXFLAGS)
 listbuckets: listbuckets.o mmfile.o
 	g++ -o listbuckets listbuckets.o mmfile.o $(LIBS)
+
+compare-prepare.o: compare-prepare.cpp mmfile.hpp
+	g++ -c -o compare-prepare.o compare-prepare.cpp $(CXXFLAGS)
+compare-prepare: compare-prepare.o mmfile.o
+	g++ -o compare-prepare compare-prepare.o mmfile.o $(LIBS)
+
+compare-lvl-store.o: compare-lvl-store.cpp mmfile.hpp
+	g++ -c -o compare-lvl-store.o compare-lvl-store.cpp $(CXXFLAGS)
+compare-lvl-store: compare-lvl-store.o mmfile.o
+	g++ -o compare-lvl-store compare-lvl-store.o mmfile.o $(LIBS)
+
+compare-fastdb-store.o: compare-fastdb-store.cpp mmfile.hpp
+	g++ -c -o compare-fastdb-store.o compare-fastdb-store.cpp $(CXXFLAGS)
+compare-fastdb-store: compare-fastdb-store.o mmfile.o transaction_database.o hashtable_database.o
+	g++ -o compare-fastdb-store compare-fastdb-store.o mmfile.o transaction_database.o hashtable_database.o $(LIBS)
 
 dispdb.o: dispdb.cpp mmfile.hpp
 	g++ -c -o dispdb.o dispdb.cpp $(CXXFLAGS)
