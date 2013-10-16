@@ -47,7 +47,7 @@ int main()
 
     log_debug() << "Reading " << total_number << " txs";
 
-    t = new timed_section("benchmark", "storing");
+    t = new timed_section("benchmark", "reading");
     for (const hash_digest& tx_hash: tx_hashes)
     {
         transaction_type tx;
