@@ -32,8 +32,11 @@ hashtable_database_writer::hashtable_database_writer(mmfile& file)
     BITCOIN_ASSERT(file_.size() >= header_size + total_records_size_);
     // Advise the kernel that our access patterns for the tx records
     // will be random without pattern.
+    madvise(file_.data(), 24, POSIX_MADV_DONTNEED);
+    madvise(file_.data() + 24, buckets_ * 8,
+        POSIX_MADV_WILLNEED | POSIX_MADV_RANDOM);
     madvise(file_.data() + header_size, file_.size() - header_size,
-        POSIX_MADV_RANDOM);
+        POSIX_MADV_DONTNEED | POSIX_MADV_RANDOM);
 }
 
 size_t align_if_crossing_page(

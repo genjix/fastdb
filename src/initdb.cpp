@@ -25,7 +25,7 @@ int main(int argc, char** argv)
     constexpr uint64_t record_doesnt_exist =
         std::numeric_limits<uint64_t>::max();
     for (uint64_t i = 0; i < buckets; ++i)
-        serial.write_8_bytes(record_doesnt_exist );
+        serial.write_8_bytes(record_doesnt_exist);
     return 0;
 }
 
