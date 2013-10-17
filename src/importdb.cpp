@@ -23,9 +23,9 @@ int main()
         hash_digest tx_hash;
         std::copy(hash_data, hash_data + 32, tx_hash.begin());
         const uint8_t* value =
-            reinterpret_cast<const uint8_t*>(it->value().data()) + 8;
+            reinterpret_cast<const uint8_t*>(it->value().data());
         transaction_type tx;
-        satoshi_load(value, value + it->value().size(), tx);
+        satoshi_load(value + 8, value + it->value().size(), tx);
         BITCOIN_ASSERT(hash_transaction(tx) == tx_hash);
         // Display every 1000th tx.
         if (rand() % 1000 == 0)
