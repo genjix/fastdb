@@ -93,7 +93,6 @@ void hashtable_database_writer::store(const hash_digest& key_hash,
         record_begin - header_size - total_records_size_;
     BITCOIN_ASSERT(alignment_padding <= page_size_);
     total_records_size_ += record_size + alignment_padding;
-    write_records_size();
     // Now add record to bucket.
     const uint64_t record_begin_offset = record_begin - header_size;
     link_record(bucket_index, record_begin_offset);
@@ -108,13 +107,6 @@ uint64_t hashtable_database_writer::read_bucket_value(uint64_t bucket_index)
     auto deserial = make_deserializer(bucket_begin, bucket_begin + 8);
     return deserial.read_8_bytes();
 }
-void hashtable_database_writer::write_records_size()
-{
-    const size_t header_size = 24 + buckets_ * 8;
-    BITCOIN_ASSERT(file_.size() >= header_size + total_records_size_);
-    auto serial = make_serializer(file_.data() + 16);
-    serial.write_8_bytes(total_records_size_);
-}
 void hashtable_database_writer::link_record(
     uint64_t bucket_index, uint64_t record_begin)
 {
@@ -123,6 +115,18 @@ void hashtable_database_writer::link_record(
     uint8_t* bucket_begin = file_.data() + bucket_offset(bucket_index);
     auto serial = make_serializer(bucket_begin);
     serial.write_8_bytes(record_begin);
+}
+
+void hashtable_database_writer::sync()
+{
+    write_records_size();
+}
+void hashtable_database_writer::write_records_size()
+{
+    const size_t header_size = 24 + buckets_ * 8;
+    BITCOIN_ASSERT(file_.size() >= header_size + total_records_size_);
+    auto serial = make_serializer(file_.data() + 16);
+    serial.write_8_bytes(total_records_size_);
 }
 
 uint64_t hashtable_database_writer::buckets() const

@@ -16,6 +16,7 @@ public:
     hashtable_database_writer(mmfile& file);
     void store(const hash_digest& key_hash,
         size_t value_size, write_value_function write);
+    void sync();
 
     uint64_t buckets() const;
     uint64_t records_size() const;

@@ -10,7 +10,10 @@ class transaction_database
 {
 public:
     transaction_database(const std::string& filename);
+
     void store(const transaction_type& tx);
+    void sync();
+
     bool get(const hash_digest& tx_hash, transaction_type& tx) const;
 
 private:

@@ -32,6 +32,7 @@ int main()
             log_debug() << "Importing: " << tx_hash;
         txdb.store(tx);
     }
+    txdb.sync();
     assert(it->status().ok());
     delete it;
     delete db;

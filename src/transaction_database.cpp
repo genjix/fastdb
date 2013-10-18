@@ -21,6 +21,11 @@ void transaction_database::store(const transaction_type& tx)
     };
     writer_.store(hash_transaction(tx), satoshi_raw_size(tx), save_tx);
 }
+void transaction_database::sync()
+{
+    writer_.sync();
+}
+
 bool transaction_database::get(
     const hash_digest& tx_hash, transaction_type& tx) const
 {

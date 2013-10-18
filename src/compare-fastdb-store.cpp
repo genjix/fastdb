@@ -27,6 +27,7 @@ int main()
         deserial.set_iterator(deserial.iterator() + raw_tx_size);
         txdb.store(tx);
     }
+    txdb.sync();
     std::cout << "read " << i << " txs" << std::endl;
     std::cout << "saving to fastdb database" << std::endl;
 
