@@ -6,11 +6,11 @@ using namespace bc;
 
 int main(int argc, char** argv)
 {
-    uint64_t buckets = 2000000;
+    uint64_t buckets = 800000000;
     if (argc == 2)
         buckets = boost::lexical_cast<uint64_t>(argv[1]);
     // create and alloc file
-    mmfile mf("../tx.db");
+    mmfile mf("tx.db");
     BITCOIN_ASSERT(mf.data() != nullptr);
     // [ version ]      8
     // [ buckets ]      8

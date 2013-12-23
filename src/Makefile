@@ -3,7 +3,8 @@ LIBS=$(shell pkg-config --libs libbitcoin) -lgmp
 
 default: initdb dispdb writedb showbucket bucketidx readdb importdb \
     listbuckets benchmark compare-prepare compare-lvl-store \
-    compare-fastdb-store compare-fetch
+    compare-fastdb-store compare-fetch write-fdb fetch-fdb \
+    write-lvl fetch-lvl
 
 mmfile.o: mmfile.cpp mmfile.hpp
 	g++ -c -o mmfile.o $(CXXFLAGS) mmfile.cpp
@@ -46,6 +47,26 @@ compare-fastdb-store.o: compare-fastdb-store.cpp mmfile.hpp
 	g++ -c -o compare-fastdb-store.o compare-fastdb-store.cpp $(CXXFLAGS)
 compare-fastdb-store: compare-fastdb-store.o mmfile.o transaction_database.o hashtable_database.o
 	g++ -o compare-fastdb-store compare-fastdb-store.o mmfile.o transaction_database.o hashtable_database.o $(LIBS)
+
+write-lvl.o: write-lvl.cpp mmfile.hpp
+	g++ -c -o write-lvl.o write-lvl.cpp $(CXXFLAGS)
+write-lvl: write-lvl.o mmfile.o transaction_database.o hashtable_database.o
+	g++ -o write-lvl write-lvl.o mmfile.o transaction_database.o hashtable_database.o $(LIBS)
+
+fetch-lvl.o: fetch-lvl.cpp mmfile.hpp
+	g++ -c -o fetch-lvl.o fetch-lvl.cpp $(CXXFLAGS)
+fetch-lvl: fetch-lvl.o mmfile.o transaction_database.o hashtable_database.o
+	g++ -o fetch-lvl fetch-lvl.o mmfile.o transaction_database.o hashtable_database.o $(LIBS)
+
+write-fdb.o: write-fdb.cpp mmfile.hpp
+	g++ -c -o write-fdb.o write-fdb.cpp $(CXXFLAGS)
+write-fdb: write-fdb.o mmfile.o transaction_database.o hashtable_database.o
+	g++ -o write-fdb write-fdb.o mmfile.o transaction_database.o hashtable_database.o $(LIBS)
+
+fetch-fdb.o: fetch-fdb.cpp mmfile.hpp
+	g++ -c -o fetch-fdb.o fetch-fdb.cpp $(CXXFLAGS)
+fetch-fdb: fetch-fdb.o mmfile.o transaction_database.o hashtable_database.o
+	g++ -o fetch-fdb fetch-fdb.o mmfile.o transaction_database.o hashtable_database.o $(LIBS)
 
 compare-fetch.o: compare-fetch.cpp mmfile.hpp
 	g++ -c -o compare-fetch.o compare-fetch.cpp $(CXXFLAGS)
