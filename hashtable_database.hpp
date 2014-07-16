@@ -34,15 +34,10 @@ private:
 class hashtable_database_reader
 {
 public:
-    struct get_result
-    {
-        const uint8_t* begin, *end;
-    };
-
     hashtable_database_reader(
         const mmfile& file,
         const hashtable_database_writer& writer);
-    const get_result get(const hash_digest& key_hash) const;
+    const uint8_t* get(const hash_digest& key_hash) const;
 
 private:
     const mmfile& file_;

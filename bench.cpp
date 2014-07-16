@@ -69,10 +69,10 @@ void validate_data()
         data_chunk value = generate_random_bytes(engine, tx_size);
         hash_digest key = bitcoin_hash(value);
 
-        const auto slab = ht.get(key);
-        BITCOIN_ASSERT(slab.begin);
+        const uint8_t* slab = ht.get(key);
+        BITCOIN_ASSERT(slab);
 
-        BITCOIN_ASSERT(std::equal(value.begin(), value.end(), slab.begin));
+        BITCOIN_ASSERT(std::equal(value.begin(), value.end(), slab));
     }
 }
 
@@ -80,8 +80,8 @@ void read_data()
 {
     mmfile file("tx.db");
     BITCOIN_ASSERT(file.data());
-    const hashtable_database_writer ht_writer(file);
-    const hashtable_database_reader ht(file, ht_writer);
+    hashtable_database_writer ht_writer(file);
+    hashtable_database_reader ht(file, ht_writer);
 
     std::ostringstream oss;
     oss << "txs = " << total_txs << " size = " << tx_size
@@ -95,9 +95,6 @@ void read_data()
         hash_digest key = bitcoin_hash(value);
 
         const auto slab = ht.get(key);
-        //BITCOIN_ASSERT(slab.begin);
-
-        //BITCOIN_ASSERT(std::equal(value.begin(), value.end(), slab.begin));
     }
 }
 

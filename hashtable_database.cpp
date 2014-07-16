@@ -163,42 +163,29 @@ uint64_t read_record_offset(const uint8_t* data, uint64_t bucket_index)
     return deserial.read_8_bytes();
 }
 
-const hashtable_database_reader::get_result hashtable_database_reader::get(
+const uint8_t* hashtable_database_reader::get(
     const hash_digest& key_hash) const
 {
     uint64_t bucket_index = remainder(key_hash.data(), writer_.buckets());
     BITCOIN_ASSERT(bucket_index < writer_.buckets());
-    uint64_t record_offset = read_record_offset(file_.data(), bucket_index);
+    uint64_t current = read_record_offset(file_.data(), bucket_index);
     const uint64_t header_size = 24 + writer_.buckets() * 8;
-    const uint8_t* all_records_begin = file_.data() + header_size;
-    const uint8_t* all_records_end =
-        all_records_begin + writer_.records_size();
-    const uint8_t* record_begin = all_records_begin + record_offset;
+    const uint8_t* file_data = file_.data() + header_size;
     // We don't know the end of a record, so we use the end of all records
     // for the deserializer.
     // We will be jumping around the records since it's a chained
     // list per bucket.
     // Begin iterating the list.
-    while (true)
+    while (current != record_doesnt_exist)
     {
-        const uint8_t* key_data = record_begin;
-        if (!std::equal(key_hash.begin(), key_hash.end(), key_data))
-        {
-            auto deserial = make_deserializer(
-                record_begin + 32, record_begin + 32 + 8);
-            // Move to next record in bucket.
-            uint64_t next_record = deserial.read_8_bytes();
-            if (next_record == record_doesnt_exist)
-                return {nullptr, nullptr};
-            record_begin = all_records_begin + next_record;
-            continue;
-        }
-        const uint8_t* value_data = record_begin + key_hash.size() + 8;
-        // We have the record!
-        return {value_data, nullptr};
+        const uint8_t* data = file_data + current;
+        if (std::equal(key_hash.begin(), key_hash.end(), data))
+            return data + 32 + 8;
+        // Move to next record in bucket.
+        current = from_little_endian<uint64_t>(data + 32);
     }
-    BITCOIN_ASSERT_MSG(false, "Broke out of unbreakable loop!");
-    return {nullptr, nullptr};
+    // Nothing found.
+    return nullptr;
 }
 
 } // namespace libbitcoin
